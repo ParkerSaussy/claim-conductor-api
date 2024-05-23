@@ -53,7 +53,7 @@ app.post('/accept_webhook', async (req, res) => {
 
     // Initial check for the body & payload content
     if (!req.body || !req.body.payload_content) {
-        status = 500;
+        status = 400;
     }
 
     const payload = req.body.payload_content;
@@ -103,6 +103,7 @@ app.post('/accept_webhook', async (req, res) => {
 
     let description = aWresponses[status];
     res.send({ status, description });
+    return;
 });
 
 const gNResponses = {
@@ -117,7 +118,7 @@ app.get('/get_name', async (req, res) => {
 
     // Initial check for the body & payload content
     if (!req.body || !req.body.payload_content) {
-        status = 500;
+        status = 400;
     }
 
     const payload = req.body.payload_content;

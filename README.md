@@ -1,13 +1,28 @@
 ### Claim Conductor Model/Demo
 
 Welcome to the repo! First a quick rundown of the structure here:
-- The main file to run is in ```server.js```. This serves as the primary head-in for the service. Note 
+- The main file to run is in ```server.js```. This serves as the primary head-in for the service.
+- ```lib/``` contains util functions for the api calls as well as the Sequelize instance used for the DB.
+- The original YAML file is included as well, though this was only so that I could use it for reference.
 
-## Deployment
+## Deployment & Writeup
 
-The service is deployed as a basic **express.js server**, running in **AWS EC2** via **PM2** with data hosted in **AWS RDS** via an instance of **MariaDB**. I chose this infrastructure because it's very quick to standup and offers a lot of scalability up to fairly large volumes, plus AWS autoscaling ensures you're less likely to hit availability walls.
+The service is deployed as a basic **express.js server**, running in **AWS EC2** via **PM2** with data hosted in **AWS RDS** via an instance of **MariaDB**. I chose this infrastructure because it's very quick to standup and offers a lot of scalability up to fairly large volumes, plus AWS autoscaling ensures you're less likely to hit availability walls in the event of traffic spikes. MariaDB (or really any SQL DB for that matter) is, to me, better suited for scalability with data of this simplicity than, say, MongoDB, because indexing allows you to pull results much quicker at scale. 
 
-If you're interested in SSHing into the server or database, that's fine - they're public as of now anyways. I'll share the passwords for these over email.
+The primary thing this is missing IMO is detailed error handling. In any CRUD app, we'd ideally like to have detailed error reporting (i.e. "user already exists", etc.) and that's missing here in favor of quick catch-alls. It's not the most critical to implement, but it helps for user comprehension.
+
+The base functions are implemented as async/await calls vs. Promises. This is primarily so that I could avoid needing to manage either A) a mix of asynchronous and synchronous values in the return function, or B) needing to return content from every potential output. Rather, we allow there to be single variables tracking status and description, and any other content is returned as a part of the same object.
+
+This infrastructure, when paired w/ a reverse proxy like nginx, can also provide us with horizontal scaling capability in the case of distributed services. We can also use AWS Cloudfront distributions for this, but that's another story.
+
+I'm happy to share login info for the server or database if you'd like to SSH into either.
+
+To run this locally, simply clone the repo, then from the root directory:
+1. Run ```npm i``` 
+2. Copy/Paste the unzipped secrets folder into the root directory
+3. Run ```node server```
+
+You should see the service running at http://localhost:3000.
 
 ### Useful Links
 
@@ -16,7 +31,7 @@ See below for links relevant to the project:
   - Note that nothing is actually being returned to the frontend here - this serves exclusively to serve data via HTTP requests.
   - This has not been configured to run over HTTPS and thus must be run unsecurely over HTTP. Check your browser settings if the page does not load, though it should load fine so long as the url specifies http:// vs https://.
   - This is running in a public nano ec2 instance; caps on memory will be very low. Shouldn't be any RAM issues.
-
+- MariaDB instance: claim-conductor-db.cls8i8caeju7.us-west-1.rds.amazonaws.com
+  - See my email for login info here if you're interested in logging in. Port will always be 3306
 
 Happy assessing! Will add notes here as they become relevant.
-
