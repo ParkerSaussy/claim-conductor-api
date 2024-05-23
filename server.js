@@ -20,7 +20,8 @@ import {
     createPerson, 
     renamePerson, 
     deletePerson, 
-    getPersonName 
+    getPersonName,
+    getAllPeople
 } from './lib/crud.js';
 
 
@@ -63,8 +64,8 @@ app.post('/accept_webhook', async (req, res) => {
     switch(req.body?.payload_type) {
         case 'PersonAdded':
             if (payload?.person_id && payload?.name && payload?.timestamp) {
-                let res = await createPerson(models, payload)
-                if (res.success) {
+                let r = await createPerson(models, payload)
+                if (r.success) {
                     status = 200;
                 } else {
                     status = 500;
@@ -75,8 +76,8 @@ app.post('/accept_webhook', async (req, res) => {
             break;
         case 'PersonRenamed':
             if (payload?.person_id && payload?.name && payload?.timestamp) {
-                let res = await renamePerson(models, payload)
-                if (res.success) {
+                let r = await renamePerson(models, payload)
+                if (r.success) {
                     status = 200;
                 } else {
                     status = 500;
@@ -87,8 +88,8 @@ app.post('/accept_webhook', async (req, res) => {
             break;
         case 'PersonRemoved':
             if (payload?.person_id && payload?.timestamp) {
-                let res = await deletePerson(models, payload)
-                if (res.success) {
+                let r = await deletePerson(models, payload)
+                if (r.success) {
                     status = 200;
                 } else {
                     status = 500;
@@ -123,10 +124,10 @@ app.get('/get_name', async (req, res) => {
 
     const payload = req.body.payload_content;
     if (payload?.person_id) {
-        let res = await getPersonName(models, payload)
-        if (res.success) {
+        let r = await getPersonName(models, payload)
+        if (r.success) {
             status = 200;
-            name = res.name;
+            name = r.name;
         } else {
             status = 500;
         }
@@ -135,6 +136,18 @@ app.get('/get_name', async (req, res) => {
     }
     let description = gNResponses[status];
     res.send({ status, description, data: { name } });
+});
+
+// This call exists purely for the frontend to give me a list of all People in the database (so I can display it)
+app.get('/get_all_people', async (req, res) => {
+    let r = await getAllPeople(models)
+    let status = 500;
+    if (r.success) {
+        status = 200;
+    } else {
+        status = 500;
+    }
+    res.send({ status, data: { people: r.people } });
 });
 
 const port = 3000; // I typically use 9000 since I often use GraphQL, but any will do here
