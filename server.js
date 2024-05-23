@@ -12,22 +12,29 @@ curl -X POST -H "Content-Type: application/json" -d '{"payload_type": "PersonRem
 */
 
 
-const express = require('express');
-const yaml = require('js-yaml');
-const fs = require('fs');
-const bodyParser = require('body-parser');
+import express from 'express';
+import Sequelize from './lib/Sequelize.js';
+import bodyParser from 'body-parser';
+import fs from 'fs'; // We use this to load our secrets file
+
+// Load our secrets file. All we have is prod - if we had a real dev server or db, we'd have separate secrets for that as well
+const loadJSON = (path) => JSON.parse(fs.readFileSync(new URL(path, import.meta.url)));
+const prod = loadJSON('./secrets/prod.json'); // All this contains as of now is our Database connection string; we'd add other API keys here as well later
 
 // Initialize express app and configure w/ body-parser
 const app = express();
 app.use(bodyParser.json());
 
+// Initialize the DB structure via our sequelize class
+// Note that this effectively remakes the DB every time it runs, though it's non-destructive (i.e. only adds new fields)
+const db = new Sequelize(prod.dbConnectionString);
 
 app.post('/accept_webhook', (req, res) => {
     let status = 200;
     let description;
 
-    // Initial check for the body
-    if (!req.body) {
+    // Initial check for the body & payload content
+    if (!req.body || !req.body.payload_content) {
         status = 500;
         description = 'Invalid Input';
     }
