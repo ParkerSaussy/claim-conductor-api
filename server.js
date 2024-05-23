@@ -8,6 +8,8 @@ Sample Webhooks to copy-paste:
 curl -X POST -H "Content-Type: application/json" -d '{"payload_type": "PersonAdded", "payload_content": {"person_id": "9fdfefc3-d7d6-46bc-aca7-870aa91b150e", "name": "Person 977", "timestamp": "2024-05-23T19:00:46.593935Z"}}' http://localhost:3000/accept_webhook
 curl -X POST -H "Content-Type: application/json" -d '{"payload_type": "PersonRenamed", "payload_content": {"person_id": "291b1c35-47fe-43fb-b673-9f2094ddd798", "name": "Renamed Person 5322", "timestamp": "2024-05-23T19:00:36.315931Z"}}' http://localhost:3000/accept_webhook
 curl -X POST -H "Content-Type: application/json" -d '{"payload_type": "PersonRemoved", "payload_content": {"person_id": "8c5ee099-e894-43f7-b62e-32460138f1b9", "timestamp": "2024-05-23T19:41:10.884707Z"}}' http://localhost:3000/accept_webhook
+curl -X GET -H "Content-Type: application/json" -d '{"payload_type": "GetNameResponse", "payload_content": {"person_id": "8c5ee099-e894-43f7-b62e-32460138f1b9" }}' http://localhost:3000/get_name
+
 
 */
 import express from 'express';
@@ -18,7 +20,7 @@ import {
     createPerson, 
     renamePerson, 
     deletePerson, 
-    getPerson 
+    getPersonName 
 } from './lib/crud.js';
 
 
@@ -35,20 +37,23 @@ app.use(bodyParser.json());
 const db = new Sequelize(prod.dbConnectionString);
 const models = db.sequelize.models;
 
-const responses = {
+const aWresponses = {
     200: 'Webhook processed successfully',
     400: 'Invalid input',
     500: 'Server error'
 }
 
 app.post('/accept_webhook', async (req, res) => {
-    let status = 200;
-    let description;
+    /* 
+    Assuming we don't really care about error reporting, we can use a catch-all here based on the responses above.
+    
+    This would be the first larger piece that I'd add when doing this later on.
+    */
+    let status = 500;
 
     // Initial check for the body & payload content
     if (!req.body || !req.body.payload_content) {
         status = 500;
-        description = 'Invalid Input';
     }
 
     const payload = req.body.payload_content;
@@ -61,14 +66,11 @@ app.post('/accept_webhook', async (req, res) => {
                 let res = await createPerson(models, payload)
                 if (res.success) {
                     status = 200;
-                    description = responses[status];
                 } else {
                     status = 500;
-                    description = responses[status];
                 }
             } else {
                 status = 400;
-                description = responses[status];
             }
             break;
         case 'PersonRenamed':
@@ -76,14 +78,11 @@ app.post('/accept_webhook', async (req, res) => {
                 let res = await renamePerson(models, payload)
                 if (res.success) {
                     status = 200;
-                    description = responses[status];
                 } else {
                     status = 500;
-                    description = responses[status];
                 }
             } else {
                 status = 400;
-                description = responses[status];
             }
             break;
         case 'PersonRemoved':
@@ -91,29 +90,51 @@ app.post('/accept_webhook', async (req, res) => {
                 let res = await deletePerson(models, payload)
                 if (res.success) {
                     status = 200;
-                    description = responses[status];
                 } else {
                     status = 500;
-                    description = responses[status];
                 }
             } else {
                 status = 400;
-                description = 'Invalid Input';
             }
             break;
         default:
             status = 400;
-            description = 'Invalid Input';
     }
 
-    if (status === 500) description = 'Server Error';
+    let description = aWresponses[status];
     res.send({ status, description });
 });
 
-app.get('/get_name', (req, res) => {
+const gNResponses = {
+    200: 'Name fetched successfully',
+    400: 'Invalid UUID format',
+    500: 'Server error'
+}
 
+app.get('/get_name', async (req, res) => {
+    let status = 500;
+    let name = null;
+
+    // Initial check for the body & payload content
+    if (!req.body || !req.body.payload_content) {
+        status = 500;
+    }
+
+    const payload = req.body.payload_content;
+    if (payload?.person_id) {
+        let res = await getPersonName(models, payload)
+        if (res.success) {
+            status = 200;
+            name = res.name;
+        } else {
+            status = 500;
+        }
+    } else {
+        status = 400;
+    }
+    let description = gNResponses[status];
+    res.send({ status, description, data: { name } });
 });
-
 
 const port = 3000; // I typically use 9000 since I often use GraphQL, but any will do here
 app.listen(3000, () => {
