@@ -1,5 +1,10 @@
 ### Claim Conductor Model/Demo
 
+Welcome to the repo! First a quick rundown of the structure here:
+- The main file to run is in ```server.js```.
+
+## Useful Links
+
 Server for claim conductor API can be found running at: http://54.193.231.155:3000/
 
 Please note that:

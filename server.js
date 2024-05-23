@@ -10,12 +10,17 @@ curl -X POST -H "Content-Type: application/json" -d '{"payload_type": "PersonRen
 curl -X POST -H "Content-Type: application/json" -d '{"payload_type": "PersonRemoved", "payload_content": {"person_id": "8c5ee099-e894-43f7-b62e-32460138f1b9", "timestamp": "2024-05-23T19:41:10.884707Z"}}' http://localhost:3000/accept_webhook
 
 */
-
-
 import express from 'express';
-import Sequelize from './lib/Sequelize.js';
 import bodyParser from 'body-parser';
 import fs from 'fs'; // We use this to load our secrets file
+import Sequelize from './lib/Sequelize.js';
+import { 
+    createPerson, 
+    renamePerson, 
+    deletePerson, 
+    getPerson 
+} from './lib/crud.js';
+
 
 // Load our secrets file. All we have is prod - if we had a real dev server or db, we'd have separate secrets for that as well
 const loadJSON = (path) => JSON.parse(fs.readFileSync(new URL(path, import.meta.url)));
@@ -28,8 +33,15 @@ app.use(bodyParser.json());
 // Initialize the DB structure via our sequelize class
 // Note that this effectively remakes the DB every time it runs, though it's non-destructive (i.e. only adds new fields)
 const db = new Sequelize(prod.dbConnectionString);
+const models = db.sequelize.models;
 
-app.post('/accept_webhook', (req, res) => {
+const responses = {
+    200: 'Webhook processed successfully',
+    400: 'Invalid input',
+    500: 'Server error'
+}
+
+app.post('/accept_webhook', async (req, res) => {
     let status = 200;
     let description;
 
@@ -40,29 +52,50 @@ app.post('/accept_webhook', (req, res) => {
     }
 
     const payload = req.body.payload_content;
+    /* 
+    First next step I'd take is somehow auto-validating via our Yaml schema, vs. manually checking the data.
+    */
     switch(req.body?.payload_type) {
-        /* 
-        First next step I'd take is somehow auto-validating via our Yaml schema, vs. manually checking the data.
-        */
         case 'PersonAdded':
             if (payload?.person_id && payload?.name && payload?.timestamp) {
-
+                let res = await createPerson(models, payload)
+                if (res.success) {
+                    status = 200;
+                    description = responses[status];
+                } else {
+                    status = 500;
+                    description = responses[status];
+                }
             } else {
                 status = 400;
-                description = 'Invalid Input';
+                description = responses[status];
             }
             break;
         case 'PersonRenamed':
             if (payload?.person_id && payload?.name && payload?.timestamp) {
-                
+                let res = await renamePerson(models, payload)
+                if (res.success) {
+                    status = 200;
+                    description = responses[status];
+                } else {
+                    status = 500;
+                    description = responses[status];
+                }
             } else {
                 status = 400;
-                description = 'Invalid Input';
+                description = responses[status];
             }
             break;
         case 'PersonRemoved':
             if (payload?.person_id && payload?.timestamp) {
-                
+                let res = await deletePerson(models, payload)
+                if (res.success) {
+                    status = 200;
+                    description = responses[status];
+                } else {
+                    status = 500;
+                    description = responses[status];
+                }
             } else {
                 status = 400;
                 description = 'Invalid Input';
