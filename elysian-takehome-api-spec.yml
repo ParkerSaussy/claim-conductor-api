@@ -1,0 +1,137 @@
+openapi: 3.0.0
+info:
+  title: Elysian Insurance Services - Claim Conductor Phonebook Integration
+  description: Service that handles incoming webhook notifications from a phonebook, manages internal state, and allows querying for current user names.
+  version: 1.0.0
+
+paths:
+  /accept_webhook:
+    post:
+      summary: Accept webhook notifications about user updates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookPayload'
+      responses:
+        '200':
+          description: Webhook processed successfully
+        '400':
+          description: Invalid input
+        '500':
+          description: Server error
+
+  /get_name:
+    get:
+      summary: Fetch the current name of a user
+      parameters:
+        - in: query
+          name: person_id
+          schema:
+            type: string
+            format: uuid
+            example: '123e4567-e89b-12d3-a456-426614174000'
+          required: true
+          description: The UUID of the person to fetch the name for
+      responses:
+        '200':
+          description: Name fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetNameResponse'
+        '400':
+          description: Invalid UUID format
+        '500':
+          description: Server error
+
+components:
+  schemas:
+    WebhookPayload:
+      type: object
+      required:
+        - payload_type
+        - payload_content
+      properties:
+        payload_type:
+          type: string
+          enum:
+            - PersonAdded
+            - PersonRenamed
+            - PersonRemoved
+        payload_content:
+          oneOf:
+            - $ref: '#/components/schemas/PersonAdded'
+            - $ref: '#/components/schemas/PersonRenamed'
+            - $ref: '#/components/schemas/PersonRemoved'
+
+    PersonAdded:
+      type: object
+      required:
+        - person_id
+        - name
+        - timestamp
+      properties:
+        person_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the person
+          example: '111e2222-e89b-12d3-a456-426614174000'
+        name:
+          type: string
+          description: Name of the person
+          example: 'John Doe'
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO datetime string when the person was added
+          example: '2024-04-12T23:20:50.52Z'
+
+    PersonRenamed:
+      type: object
+      required:
+        - person_id
+        - name
+        - timestamp
+      properties:
+        person_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the person
+          example: '333e4444-e89b-12d3-a456-426614174000'
+        name:
+          type: string
+          description: New name of the person
+          example: 'Jane Doe'
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO datetime string when the person was renamed
+          example: '2024-04-12T23:30:50.52Z'
+
+    PersonRemoved:
+      type: object
+      required:
+        - person_id
+        - timestamp
+      properties:
+        person_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the person
+          example: '555e6666-e89b-12d3-a456-426614174000'
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO datetime string when the person was removed
+          example: '2024-04-12T23:40:50.52Z'
+
+    GetNameResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+          description: Current name of the person or null if not available
+          example: 'Jane Doe'
