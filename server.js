@@ -9,9 +9,8 @@ curl -X POST -H "Content-Type: application/json" -d '{"payload_type": "PersonAdd
 curl -X POST -H "Content-Type: application/json" -d '{"payload_type": "PersonRenamed", "payload_content": {"person_id": "291b1c35-47fe-43fb-b673-9f2094ddd798", "name": "Renamed Person 5322", "timestamp": "2024-05-23T19:00:36.315931Z"}}' http://localhost:3000/accept_webhook
 curl -X POST -H "Content-Type: application/json" -d '{"payload_type": "PersonRemoved", "payload_content": {"person_id": "8c5ee099-e894-43f7-b62e-32460138f1b9", "timestamp": "2024-05-23T19:41:10.884707Z"}}' http://localhost:3000/accept_webhook
 curl -X GET -H "Content-Type: application/json" -d '{"payload_type": "GetNameResponse", "payload_content": {"person_id": "8c5ee099-e894-43f7-b62e-32460138f1b9" }}' http://localhost:3000/get_name
-
-
 */
+
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
@@ -24,7 +23,6 @@ import {
     getPersonName,
     getAllPeople
 } from './lib/crud.js';
-
 
 // Load our secrets file. All we have is prod - if we had a real dev server or db, we'd have separate secrets for that as well
 const loadJSON = (path) => JSON.parse(fs.readFileSync(new URL(path, import.meta.url)));

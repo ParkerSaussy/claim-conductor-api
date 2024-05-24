@@ -15,6 +15,8 @@ The base functions are implemented as async/await calls vs. Promises. This is pr
 
 This infrastructure, when paired w/ a reverse proxy like nginx, can also provide us with horizontal scaling capability in the case of distributed services. We can also use AWS Cloudfront distributions for this, but that's another story.
 
+UPDATE: Though I reached time earlier on and moved onto the frontend, I realized afterwards that the prompt actually intended for me to hold onto each actual change action and add new ones each time a rename occurred, and thus return the newest one when get_name is called. I missed this on my read-thru, so it's not  implemented here. It's a simple change but since I'm past time, I'll speak to how I'd modify this to address that when we next speak.
+
 I'm happy to share login info for the server or database if you'd like to SSH into either.
 
 To run this locally, simply clone the repo, then from the root directory:
