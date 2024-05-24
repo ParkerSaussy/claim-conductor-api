@@ -261,7 +261,7 @@ app.get('/v2/get_all_people', async (req, res) => {
     } else {
         status = 500;
     }
-    res.send({ status, data: { people: r.people } });
+    res.send({ status, data: { actions: r.actions } });
 });
 
 
