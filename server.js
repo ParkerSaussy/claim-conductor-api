@@ -13,6 +13,7 @@ curl -X GET -H "Content-Type: application/json" -d '{"payload_type": "GetNameRes
 
 */
 import express from 'express';
+import cors from 'cors';
 import bodyParser from 'body-parser';
 import fs from 'fs'; // We use this to load our secrets file
 import Sequelize from './lib/Sequelize.js';
@@ -32,6 +33,7 @@ const prod = loadJSON('./secrets/prod.json'); // All this contains as of now is 
 // Initialize express app and configure w/ body-parser
 const app = express();
 app.use(bodyParser.json());
+app.use(cors());
 
 // Initialize the DB structure via our sequelize class
 // Note that this effectively remakes the DB every time it runs, though it's non-destructive (i.e. only adds new fields)
@@ -151,6 +153,6 @@ app.get('/get_all_people', async (req, res) => {
 });
 
 const port = 3000; // I typically use 9000 since I often use GraphQL, but any will do here
-app.listen(3000, () => {
+app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
