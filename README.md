@@ -25,9 +25,10 @@ To run this locally, simply clone the repo, then from the root directory:
 1. Run ```npm i``` 
 2. Copy/Paste the unzipped secrets folder into the root directory
 3. Run ```node server```
-4. Run the associated ```curl``` commands and hit either the original or v2 APIs (each uses a separate database), and observe the returned value(s) in the command line.
 
 You should see the service running at http://localhost:3000.
+
+To add & return data in either case (i.e. local or the deployed app), run the associated ```curl``` commands and hit either the original or v2 APIs (each uses a separate database), and observe the returned value(s) in the command line. Ping me if this isn't clear!
 
 ### Useful Links
 
