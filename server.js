@@ -23,6 +23,14 @@ import {
     getPersonName,
     getAllPeople
 } from './lib/crud.js';
+// V2 IMPORTS
+import {
+    createPerson_v2,
+    renamePerson_v2,
+    deletePerson_v2,
+    getPersonName_v2,
+    getAllPeople_v2
+} from './lib/crud_v2.js';
 
 // Load our secrets file. All we have is prod - if we had a real dev server or db, we'd have separate secrets for that as well
 const loadJSON = (path) => JSON.parse(fs.readFileSync(new URL(path, import.meta.url)));
@@ -149,6 +157,113 @@ app.get('/get_all_people', async (req, res) => {
     }
     res.send({ status, data: { people: r.people } });
 });
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* V2 ENDPOINTS - Same as the above but modified to preserve each entry (as "Action") vs. update a single item */
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.post('/v2/accept_webhook', async (req, res) => {
+    /* 
+    Assuming we don't really care about error reporting, we can use a catch-all here based on the responses above.
+    
+    This would be the first larger piece that I'd add when doing this later on.
+    */
+    let status = 500;
+    const now = new Date().toISOString();
+
+    // Initial check for the body & payload content
+    if (!req.body || !req.body.payload_content) {
+        status = 400;
+    }
+
+    let payload = req.body.payload_content;
+    payload['timestamp'] = now; // We'll add the timestamp here to ensure it's always present and accurate (and that we don't have to iterate test data)
+    
+    /* 
+    First next step I'd take is somehow auto-validating via our Yaml schema, vs. manually checking the data.
+    */
+    switch(req.body?.payload_type) {
+        case 'PersonAdded':
+            if (payload?.person_id && payload?.name && payload?.timestamp) {
+                let r = await createPerson_v2(models, payload)
+                if (r.success) {
+                    status = 200;
+                } else {
+                    status = 500;
+                }
+            } else {
+                status = 400;
+            }
+            break;
+        case 'PersonRenamed':
+            if (payload?.person_id && payload?.name && payload?.timestamp) {
+                let r = await renamePerson_v2(models, payload)
+                if (r.success) {
+                    status = 200;
+                } else {
+                    status = 500;
+                }
+            } else {
+                status = 400;
+            }
+            break;
+        case 'PersonRemoved':
+            if (payload?.person_id && payload?.timestamp) {
+                let r = await deletePerson_v2(models, payload)
+                if (r.success) {
+                    status = 200;
+                } else {
+                    status = 500;
+                }
+            } else {
+                status = 400;
+            }
+            break;
+        default:
+            status = 400;
+    }
+
+    let description = aWresponses[status];
+    res.send({ status, description });
+    return;
+});
+
+app.get('/v2/get_name', async (req, res) => {
+    let status = 500;
+    let name = null;
+
+    // Initial check for the body & payload content
+    if (!req.body || !req.body.payload_content) {
+        status = 400;
+    }
+
+    const payload = req.body.payload_content;
+    if (payload?.person_id) {
+        let r = await getPersonName_v2(models, payload)
+        if (r.success) {
+            status = 200;
+            name = r.name;
+        } else {
+            status = 500;
+        }
+    } else {
+        status = 400;
+    }
+    let description = gNResponses[status];
+    res.send({ status, description, data: { name } });
+});
+
+app.get('/v2/get_all_people', async (req, res) => {
+    let r = await getAllPeople_v2(models)
+    let status = 500;
+    if (r.success) {
+        status = 200;
+    } else {
+        status = 500;
+    }
+    res.send({ status, data: { people: r.people } });
+});
+
 
 const port = 3000; // I typically use 9000 since I often use GraphQL, but any will do here
 app.listen(port, () => {
